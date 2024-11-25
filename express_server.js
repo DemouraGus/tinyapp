@@ -11,8 +11,12 @@ app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
-app.get('urls.json', (request, response) => {
+app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
+});
+
+app.get('/hello', (request, response) => {
+  response.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.listen(port, () => {
