@@ -2,6 +2,16 @@ const express = require('express');
 const app = express();
 const port = 8080;
 
+const generateRandomString = function() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters[randomIndex];
+  }
+  return result;
+};
+
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
@@ -26,7 +36,10 @@ app.get('/urls', (req, res) => {
 
 app.post('/urls', (req, res) => {
   console.log(req.body);
-  res.send('Ok');
+  const id = generateRandomString();
+  const longUrl = req.body.longURL;
+  urlDatabase[id] = longUrl;
+  res.redirect(`/urls/${id}`);
 })
 
 app.get('/urls/new', (req, res) => {
@@ -37,6 +50,12 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] }; // Not sure about the longURL value here
   res.render('urls_show', templateVars);
 });
+
+app.get('/u/:id', (req, res) => {
+  const id = req.params.id
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
+})
 
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
