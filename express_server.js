@@ -35,7 +35,6 @@ app.get('/urls', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  console.log(req.body);
   const id = generateRandomString();
   const longUrl = req.body.longURL;
   urlDatabase[id] = longUrl;
@@ -70,6 +69,10 @@ app.get('/u/:id', (req, res) => {
   res.redirect(longURL);
 });
 
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect('/urls');
+});
 
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
