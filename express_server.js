@@ -13,6 +13,15 @@ const generateRandomString = function() {
   return result;
 };
 
+const userLookup = function(email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user];
+    }
+  }
+  return null;
+};
+
 app.set('view engine', 'ejs');
 app.use(cookieParser());
 
@@ -104,9 +113,18 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
+   
   const userID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  
+  if (req.body.email.length === 0 || req.body.password.length === 0) {
+    return res.status(400).send('Bad Request: email or password cannot be empty');
+  }
+
+  if (userLookup(email)) {
+    return res.status(400).send('Bad Request: email already registered');
+  }
 
   const newUser = {
     userID: userID,
