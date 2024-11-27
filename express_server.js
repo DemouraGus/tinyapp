@@ -21,6 +21,14 @@ const urlDatabase = {
   '9sm5xK': 'http://www.google.com'
 };
 
+const users = {
+  exampleUserID: {
+    userID: 'exampleUserID',
+    email: 'user@example.com',
+    password: 'userExample'
+  }
+};
+
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
@@ -32,7 +40,9 @@ app.get('/urls.json', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies['username'] };
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { urls: urlDatabase, user: user };
   res.render('urls_index', templateVars);
 });
 
@@ -44,12 +54,16 @@ app.post('/urls', (req, res) => {
 })
 
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies['username'] }
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user }
   res.render("urls_new", templateVars);
 });
 
 app.get('/urls/:id', (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies['username'] }; // Not sure about the longURL value here
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: user }; // Not sure about the longURL value here
   res.render('urls_show', templateVars);
 });
 
@@ -83,8 +97,27 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const templateVars = { username: req.cookies['username'] }
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = { user: user }
   res.render('register', templateVars)
+});
+
+app.post('/register', (req, res) => {
+  const userID = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const newUser = {
+    userID: userID,
+    email: email,
+    password: password
+  }
+
+  users[userID] = newUser;
+  res.cookie('user_id', userID);
+
+  res.redirect('urls');
 });
 
 app.get('/hello', (req, res) => {
