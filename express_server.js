@@ -91,7 +91,7 @@ app.post('/urls/:id/delete', (req, res) => {
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.get('/u/:id', (req, res) => {
@@ -108,7 +108,19 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = userLookup(email);
+
+  if (!user) {
+    return res.status(403).send('Email cannot be found');
+  }
+
+  if (user.password !== password) {
+    return res.status(403).send('Wrong password');
+  }
+
+  res.cookie('user_id', user.userID);
   res.redirect('/urls');
 });
 
