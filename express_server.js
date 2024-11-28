@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cookieParser = require('cookie-parser');
 const port = 8080;
+const bcrypt = require('bcryptjs');
 
 const generateRandomString = function() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -52,7 +53,7 @@ const users = {
   aJ48lW: {
     id: 'aJ48lW',
     email: 'goose@goose.com',
-    password: 'capitu'
+    hashedPassword: 'capitu'
   }
 };
 
@@ -140,7 +141,7 @@ app.post('/urls/:id/delete', (req, res) => {
   if (urlDatabase[req.params.id].userID !== userID) {
     return res.status(403).send('Requested short URL belongs to another user');
   }
-  
+
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect('/urls');
@@ -183,7 +184,7 @@ app.post('/login', (req, res) => {
     return res.status(403).send('Email cannot be found');
   }
 
-  if (user.password !== password) {
+  if (!bcrypt.compareSync(password, user.hashedPassword)) {
     return res.status(403).send('Wrong password');
   }
 
@@ -207,6 +208,7 @@ app.post('/register', (req, res) => {
    
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   
   if (req.body.email.length === 0 || req.body.password.length === 0) {
     return res.status(400).send('Bad Request: email or password cannot be empty');
@@ -217,7 +219,7 @@ app.post('/register', (req, res) => {
   }
   const id = generateRandomString();
   
-  users[id] = { id, email, password }
+  users[id] = { id, email, hashedPassword }
 
   res.cookie('user_id', id);
 
