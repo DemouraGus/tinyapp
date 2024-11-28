@@ -14,27 +14,45 @@ const generateRandomString = function() {
 };
 
 const userLookup = function(email) {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return users[user];
+  for (const id in users) {
+    if (users[id].email === email) {
+      return users[id];
     }
   }
   return null;
+};
+
+const urlsForUser = function(id) {
+  const userUrls = {};
+  for (const urlID in urlDatabase) {
+    if (urlDatabase[urlID].userID === id) {
+      userUrls[urlID] = urlDatabase[urlID]
+    }
+  }
+  return userUrls;
 };
 
 app.set('view engine', 'ejs');
 app.use(cookieParser());
 
 const urlDatabase = {
-  b2xVn2: 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
+  b6UTxQ: {
+    id: 'b6UTxQ',
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    id: 'i3BoGr',
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
-  exampleUserID: {
-    userID: 'exampleUserID',
-    email: 'user@example.com',
-    password: 'userExample'
+  aJ48lW: {
+    id: 'aJ48lW',
+    email: 'goose@goose.com',
+    password: 'capitu'
   }
 };
 
@@ -51,7 +69,14 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
   const userID = req.cookies['user_id'];
   const user = users[userID];
-  const templateVars = { urls: urlDatabase, user: user };
+
+  if (!user) {
+    return res.status(403).send('Must be logged in to shorten URLs');
+  }
+
+  const urls = urlsForUser(user.id);
+  
+  const templateVars = { urls, user };
   res.render('urls_index', templateVars);
 });
 
@@ -64,8 +89,8 @@ app.post('/urls', (req, res) => {
   }
 
   const id = generateRandomString();
-  const longUrl = req.body.longURL;
-  urlDatabase[id] = longUrl;
+  const longURL = req.body.longURL;
+  urlDatabase[id] = { longURL: longURL, userID: userID};
   res.redirect(`/urls/${id}`);
 })
 
@@ -84,18 +109,38 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:id', (req, res) => {
   const userID = req.cookies['user_id'];
   const user = users[userID];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: user }; // Not sure about the longURL value here
+
+  if (!user) {
+    return res.status(403).send('Must be logged in to use this feature');
+  }
+
+  if (userID !== urlDatabase[req.params.id].userID) {
+    return res.status(403).send('Requested short URL belongs to another user');
+  }
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: user }; // Not sure about the longURL value here
   res.render('urls_show', templateVars);
 });
 
 app.post('/urls/:id', (req, res) => {
+  const userID = req.cookies['user_id'];
+
+  if (urlDatabase[req.params.id].userID !== userID) {
+    return res.status(403).send('Requested short URL belongs to another user');
+  }
+
   const id = req.params.id;
   const longURL = req.body.longURL;
-  urlDatabase[id] = longURL;
+  urlDatabase[id].longURL = longURL;
   res.redirect('/urls');
 });
 
 app.post('/urls/:id/delete', (req, res) => {
+  const userID = req.cookies['user_id'];
+
+  if (urlDatabase[req.params.id].userID !== userID) {
+    return res.status(403).send('Requested short URL belongs to another user');
+  }
+  
   const id = req.params.id;
   delete urlDatabase[id];
   res.redirect('/urls');
@@ -108,7 +153,7 @@ app.post('/logout', (req, res) => {
 
 app.get('/u/:id', (req, res) => {
   const id = req.params.id
-  const longURL = urlDatabase[id];
+  const longURL = urlDatabase[id].longURL;
 
   if(!urlDatabase[id]) {
     return res.status(403).send('Shortened URL does not exist');
@@ -142,7 +187,7 @@ app.post('/login', (req, res) => {
     return res.status(403).send('Wrong password');
   }
 
-  res.cookie('user_id', user.userID);
+  res.cookie('user_id', user.id);
   res.redirect('/urls');
 });
 
@@ -160,26 +205,21 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
    
-  const userID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
   
   if (req.body.email.length === 0 || req.body.password.length === 0) {
     return res.status(400).send('Bad Request: email or password cannot be empty');
   }
-
+  
   if (userLookup(email)) {
     return res.status(400).send('Bad Request: email already registered');
   }
+  const id = generateRandomString();
+  
+  users[id] = { id, email, password }
 
-  const newUser = {
-    userID: userID,
-    email: email,
-    password: password
-  }
-
-  users[userID] = newUser;
-  res.cookie('user_id', userID);
+  res.cookie('user_id', id);
 
   res.redirect('urls');
 });
