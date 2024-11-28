@@ -21,10 +21,10 @@ const urlsForUser = function(id, database) {
   const userUrls = {};
   for (const urlID in database) {
     if (database[urlID].userID === id) {
-      userUrls[urlID] = database[urlID]
+      userUrls[urlID] = database[urlID];
     }
   }
   return userUrls;
 };
 
-module.exports = { generateRandomString, userLookup, urlsForUser }
+module.exports = { generateRandomString, userLookup, urlsForUser };

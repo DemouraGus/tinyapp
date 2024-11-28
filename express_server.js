@@ -37,11 +37,7 @@ const users = {
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
-});
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
+  res.redirect('/urls!');
 });
 
 app.get('/urls', (req, res) => {
@@ -49,7 +45,7 @@ app.get('/urls', (req, res) => {
   const user = users[userID];
 
   if (!user) {
-    return res.status(403).send('Must be logged in to shorten URLs');
+    return res.redirect('/login');
   }
 
   const urls = urlsForUser(user.id, urlDatabase);
@@ -70,7 +66,7 @@ app.post('/urls', (req, res) => {
   const longURL = req.body.longURL;
   urlDatabase[id] = { longURL: longURL, userID: userID};
   res.redirect(`/urls/${id}`);
-})
+});
 
 app.get('/urls/new', (req, res) => {
   const userID = req.session.user_id;
@@ -80,7 +76,7 @@ app.get('/urls/new', (req, res) => {
     return res.redirect('/login');
   }
 
-  const templateVars = { user: user }
+  const templateVars = { user: user };
   res.render("urls_new", templateVars);
 });
 
@@ -130,10 +126,10 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/u/:id', (req, res) => {
-  const id = req.params.id
+  const id = req.params.id;
   const longURL = urlDatabase[id].longURL;
 
-  if(!urlDatabase[id]) {
+  if (!urlDatabase[id]) {
     return res.status(403).send('Shortened URL does not exist');
   }
 
@@ -148,8 +144,8 @@ app.get('/login', (req, res) => {
     return res.redirect('/urls');
   }
 
-  const templateVars = { user: user }
-  res.render('login', templateVars)
+  const templateVars = { user: user };
+  res.render('login', templateVars);
 });
 
 app.post('/login', (req, res) => {
@@ -177,8 +173,8 @@ app.get('/register', (req, res) => {
     return res.redirect('/urls');
   }
 
-  const templateVars = { user: user }
-  res.render('register', templateVars)
+  const templateVars = { user: user };
+  res.render('register', templateVars);
 });
 
 app.post('/register', (req, res) => {
@@ -196,15 +192,10 @@ app.post('/register', (req, res) => {
   }
   const id = generateRandomString();
   
-  users[id] = { id, email, hashedPassword }
+  users[id] = { id, email, hashedPassword };
 
   req.session.user_id = id;
-
   res.redirect('urls');
-});
-
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
 
 app.listen(port, () => {
