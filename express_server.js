@@ -8,31 +8,15 @@ const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
 
 
 app.set('view engine', 'ejs');
+
 app.use(cookieSession({
   name: 'session',
-  keys: ['some value']
+  keys: ['dkjlkfnvlkjlj'],
 }));
 
-const urlDatabase = {
-  b6UTxQ: {
-    id: 'b6UTxQ',
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    id: 'i3BoGr',
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
+const urlDatabase = {};
 
-const users = {
-  aJ48lW: {
-    id: 'aJ48lW',
-    email: 'goose@goose.com',
-    hashedPassword: 'capitu'
-  }
-};
+const users = {};
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,7 +25,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -55,7 +39,7 @@ app.get('/urls', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -69,7 +53,7 @@ app.post('/urls', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -81,7 +65,7 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.get('/urls/:id', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (!user) {
@@ -96,7 +80,7 @@ app.get('/urls/:id', (req, res) => {
 });
 
 app.post('/urls/:id', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
 
   if (urlDatabase[req.params.id].userID !== userID) {
     return res.status(403).send('Requested short URL belongs to another user');
@@ -109,7 +93,7 @@ app.post('/urls/:id', (req, res) => {
 });
 
 app.post('/urls/:id/delete', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
 
   if (urlDatabase[req.params.id].userID !== userID) {
     return res.status(403).send('Requested short URL belongs to another user');
@@ -121,7 +105,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  req.session = null;
+  req.session.userID = null;
   res.redirect('/login');
 });
 
@@ -137,7 +121,7 @@ app.get('/u/:id', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.ID_id;
   const user = users[userID];
 
   if (user) {
@@ -161,12 +145,12 @@ app.post('/login', (req, res) => {
     return res.status(403).send('Wrong password');
   }
 
-  req.session.user_id = user.id;
+  req.session.userID = user.id;
   res.redirect('/urls');
 });
 
 app.get('/register', (req, res) => {
-  const userID = req.session.user_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (user) {
@@ -194,7 +178,7 @@ app.post('/register', (req, res) => {
   
   users[id] = { id, email, hashedPassword };
 
-  req.session.user_id = id;
+  req.session.userID = id;
   res.redirect('urls');
 });
 
