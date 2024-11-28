@@ -3,35 +3,9 @@ const app = express();
 const cookieSession = require('cookie-session');
 const port = 8080;
 const bcrypt = require('bcryptjs');
+const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
 
-const generateRandomString = function() {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    result += characters[randomIndex];
-  }
-  return result;
-};
 
-const userLookup = function(email) {
-  for (const id in users) {
-    if (users[id].email === email) {
-      return users[id];
-    }
-  }
-  return null;
-};
-
-const urlsForUser = function(id) {
-  const userUrls = {};
-  for (const urlID in urlDatabase) {
-    if (urlDatabase[urlID].userID === id) {
-      userUrls[urlID] = urlDatabase[urlID]
-    }
-  }
-  return userUrls;
-};
 
 app.set('view engine', 'ejs');
 app.use(cookieSession({
@@ -78,7 +52,7 @@ app.get('/urls', (req, res) => {
     return res.status(403).send('Must be logged in to shorten URLs');
   }
 
-  const urls = urlsForUser(user.id);
+  const urls = urlsForUser(user.id, urlDatabase);
   
   const templateVars = { urls, user };
   res.render('urls_index', templateVars);
@@ -181,7 +155,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = userLookup(email);
+  const user = userLookup(email, users);
 
   if (!user) {
     return res.status(403).send('Email cannot be found');
@@ -217,7 +191,7 @@ app.post('/register', (req, res) => {
     return res.status(400).send('Bad Request: email or password cannot be empty');
   }
   
-  if (userLookup(email)) {
+  if (userLookup(email, users)) {
     return res.status(400).send('Bad Request: email already registered');
   }
   const id = generateRandomString();
