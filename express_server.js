@@ -3,7 +3,8 @@ const app = express();
 const cookieSession = require('cookie-session');
 const port = 8080;
 const bcrypt = require('bcryptjs');
-const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
+const { generateRandomString, userLookup, urlsForUser } = require('./helpers'); // imports helper functions
+const { urlDatabase, users } = require('./data/data_objects'); // imports data objects
 
 
 
@@ -14,27 +15,28 @@ app.use(cookieSession({
   keys: ['dkjlkfnvlkjlj'],
 }));
 
-const urlDatabase = {};
-
-const users = {};
 
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-  res.redirect('/urls!');
+  res.redirect('/urls');
 });
 
 app.get('/urls', (req, res) => {
   const userID = req.session.userID;
   const user = users[userID];
 
+  let errorMessage = null;
+
   if (!user) {
-    return res.redirect('/login');
+    errorMessage = "You must be logged in to use this feature";
   }
 
-  const urls = urlsForUser(user.id, urlDatabase);
+  // Line added to check if error message is shown on /urls when user is not logged in
+  // Used this syntax to make it concise and pass the information to the ejs file
+  const urls = user ? urlsForUser(user.id, urlDatabase) : {};
   
-  const templateVars = { urls, user };
+  const templateVars = { urls, user, errorMessage };
   res.render('urls_index', templateVars);
 });
 
@@ -105,7 +107,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-  req.session.userID = null;
+  req.session = null; // changed from clearing just the userID information to clear the whole cookie as advised by the first evaluation
   res.redirect('/login');
 });
 
@@ -121,7 +123,7 @@ app.get('/u/:id', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const userID = req.session.ID_id;
+  const userID = req.session.userID;
   const user = users[userID];
 
   if (user) {
